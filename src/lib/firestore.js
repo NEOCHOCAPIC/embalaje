@@ -1,0 +1,1 @@
+//aca iran las funciones para traer datos de firestore
