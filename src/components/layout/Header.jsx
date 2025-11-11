@@ -27,11 +27,10 @@ export function Header() {
   ]
 
   const categories = [
-    { id: 'film', name: 'FILM', subcategories: ['Stretch Film Transparente', 'Stretch Film Negro', 'Stretch Film Colores', 'Stretch Film Automático'] },
-    { id: 'cintas', name: 'CINTAS', subcategories: ['Cinta de Embalaje Transparente', 'Cinta de Embalaje Reforzada', 'Cinta de Papel'] },
-    { id: 'plasticos', name: 'PLASTICOS', subcategories: ['Plástico Burbuja', 'Plástico de Burbuja Gruesa', 'Nylon'] },
-    { id: 'carton', name: 'CARTON', subcategories: ['Cajas de Cartón', 'Corrugado', 'Cartón Ondulado'] },
-    { id: 'otros', name: 'OTROS INSUMOS Y ACCESORIOS', subcategories: ['Papel de Embalaje', 'Espuma', 'Cojinetes'] }
+    { id: 'film', name: 'FILM STRETCH', subcategories: ['Stretch Film Transparente', 'Stretch Film Negro', 'Stretch Film Colores', 'Stretch Film Automático', 'Stretch Film Pre-Estirado','Stretch Film Alimentos'] },
+    { id: 'cintas', name: 'CINTAS', subcategories: ['Cinta de 48 mm', 'Cinta de 72 mm', 'Cinta de Colores','Cinta masking tape', 'Cinta filamentada','Cinta Personalizada'] },
+    { id: 'embalaje', name: 'Embalaje General', subcategories: ['Plastico burbuja', 'carton corrugado', 'Esquineros' ,'zunchos metalicos','zunchos plasticos','cajas carton a medida',' mangas polietileno'] },
+    { id: 'otros', name: 'OTROS INSUMOS Y ACCESORIOS', subcategories: ['Grapas para zunchos', 'Kit de ensunzhadora', 'Dispensador de cintas'] }
   ]
 
   // Cambiar mensaje 
@@ -141,7 +140,7 @@ export function Header() {
                 {categories.find(c => c.id === activeCategory)?.subcategories.map((subcat, idx) => (
                   <a
                     key={idx}
-                    href={`/productos/${activeCategory}/${idx}`}
+                    href={`/productos/${activeCategory}/${encodeURIComponent(subcat)}`}
                     className="block px-4 py-3 text-sm text-gray-700 hover:bg-white hover:text-primary transition border-b border-gray-200 last:border-b-0"
                   >
                     {subcat}
@@ -155,12 +154,12 @@ export function Header() {
         <a href="/ofertas" className="px-4 py-3 text-black font-medium text-sm hover:text-primary transition">
           Ofertas
         </a>
-        <a href="/faq" className="px-4 py-3 text-black font-medium text-sm hover:text-primary transition">
+        {/* <a href="/faq" className="px-4 py-3 text-black font-medium text-sm hover:text-primary transition">
           FAQ
         </a>
         <a href="/venta-mayorista" className="px-4 py-3 text-black font-medium text-sm hover:text-primary transition">
           Venta Mayorista
-        </a>
+        </a> */}
         <a href="/contacto" className="px-4 py-3 text-black font-medium text-sm hover:text-primary transition">
           Contacto
         </a>
@@ -200,7 +199,7 @@ export function Header() {
                         {cat.subcategories.map((subcat, idx) => (
                           <a
                             key={idx}
-                            href={`/productos/${cat.id}/${idx}`}
+                            href={`/productos/${cat.id}/${encodeURIComponent(subcat)}`}
                             className="block px-6 py-2 text-gray-700 text-xs hover:text-black hover:bg-gray-100 transition"
                           >
                             {subcat}
