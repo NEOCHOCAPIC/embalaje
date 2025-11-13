@@ -9,9 +9,11 @@ import { LoginAdmin } from './pages/admin/LoginAdmin'
 import { AdminDashboard } from './pages/admin/AdminDashboard'
 import { AdminProductos } from './pages/admin/AdminProductos'
 import Contact from './pages/Contact';
+import Productos from './pages/Productos'
 import WhatsAppButton from './components/Wsp'
 import { Destacados } from './components/public/Destacados'
 import Nosotros from './components/public/Nosotros'
+import ProductoDetalle from './pages/ProductoDetalle';
 
 function App() {
   return (
@@ -29,6 +31,12 @@ function App() {
               <Footer />
             </>
           } />
+           {/* Rutas públicas */}
+          <Route path="/productos" element={<Productos />} />
+          <Route path="/productos/:categoriaId" element={<Productos />} />
+          <Route path="/productos/:categoriaId/:subcategoriaId" element={<Productos />} />
+          <Route path="/contacto" element={<Contact />} />
+          <Route path="/producto/:productoId" element={<ProductoDetalle />} />
           
           {/* Rutas de admin */}
           <Route path="/admin" element={<LoginAdmin />} />
@@ -42,8 +50,10 @@ function App() {
               <AdminProductos />
             </ProtectedRoute>
           } />
-          <Route path="/contacto" element={<Contact />} />
+          
+         
         </Routes>
+        
       </BrowserRouter>
     </AuthProvider>
   )

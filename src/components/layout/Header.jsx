@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { getCategorias } from '../../lib/categoriesService.js'
 
 const MenuIcon = () => (
   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -20,18 +21,30 @@ export function Header() {
   const [activeMenu, setActiveMenu] = useState(null)
   const [promoIndex, setPromoIndex] = useState(0)
   const [activeCategory, setActiveCategory] = useState('film')
+  const [categories, setCategories] = useState([])
+  const [mobileProductsOpen, setMobileProductsOpen] = useState(false)
 
   const promoMessages = [
     'Despacho gratis en la RM por compras sobre $100.000',
     'Despacho entre 1 a 2 días'
   ]
 
-  const categories = [
-    { id: 'film', name: 'FILM STRETCH', subcategories: ['Stretch Film Transparente', 'Stretch Film Negro', 'Stretch Film Colores', 'Stretch Film Automático', 'Stretch Film Pre-Estirado','Stretch Film Alimentos'] },
-    { id: 'cintas', name: 'CINTAS', subcategories: ['Cinta de 48 mm', 'Cinta de 72 mm', 'Cinta de Colores','Cinta masking tape', 'Cinta filamentada','Cinta Personalizada'] },
-    { id: 'embalaje', name: 'Embalaje General', subcategories: ['Plastico burbuja', 'carton corrugado', 'Esquineros' ,'zunchos metalicos','zunchos plasticos','cajas carton a medida',' mangas polietileno'] },
-    { id: 'otros', name: 'OTROS INSUMOS Y ACCESORIOS', subcategories: ['Grapas para zunchos', 'Kit de ensunzhadora', 'Dispensador de cintas'] }
-  ]
+  // Cargar categorías desde Firestore
+  useEffect(() => {
+    const loadCategorias = async () => {
+      try {
+        const cats = await getCategorias()
+        setCategories(cats)
+        // Establecer la primera categoría como activa
+        if (cats.length > 0) {
+          setActiveCategory(cats[0].id)
+        }
+      } catch (error) {
+        console.error('Error cargando categorías:', error)
+      }
+    }
+    loadCategorias()
+  }, [])
 
   // Cambiar mensaje 
   useEffect(() => {
@@ -51,11 +64,20 @@ export function Header() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+ 
+  const handleMobileMenuToggle = (menu) => {
+    setActiveMenu((prevMenu) => (prevMenu === menu ? null : menu));
+  };
+
+  const handleCategoryToggle = (categoryId) => {
+    setActiveCategory((prevCategory) => (prevCategory === categoryId ? null : categoryId));
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full bg-white shadow-sm">
       {/* Banner de promoción */}
-      <div className={`overflow-hidden transition-all duration-300 ${showPromo ? 'max-h-12' : 'max-h-0'}`}>
-        <div className="bg-gray-100 px-4 py-3 text-center text-sm font-semibold text-black border-b border-gray-200">
+      <div className={`overflow-hidden transition-all duration-300 will-change-[max-height] ${showPromo ? 'max-h-12' : 'max-h-0'}`} style={{ transitionTimingFunction: 'ease-in-out' }}>
+        <div className="bg-gray-100 px-4 py-3 text-center text-sm font-semibold text-black border-b border-gray-200 whitespace-nowrap">
           {promoMessages[promoIndex]}
         </div>
       </div>
@@ -73,12 +95,7 @@ export function Header() {
           {/* Buscador - Hidden on mobile */}
           <div className="hidden md:flex flex-1 max-w-md">
             <div className="w-full flex items-center border border-gray-300 rounded-md bg-gray-50 overflow-hidden">
-              <select className="px-3 py-2 bg-gray-100 border-r border-gray-300 text-black font-medium text-sm cursor-pointer hover:bg-gray-200 transition">
-                <option>Todos</option>
-                <option>Film</option>
-                <option>Cinta de Embalaje</option>
-                <option>Plástico Burbuja</option>
-              </select>
+              
               <input 
                 type="text" 
                 placeholder="Buscar productos..." 
@@ -122,28 +139,30 @@ export function Header() {
               {/* Panel izquierdo: Categorías */}
               <div className="w-48 border-r border-gray-200">
                 {categories.map((cat) => (
-                  <button
+                  <a
                     key={cat.id}
+                    href={`/productos/${cat.id}`}
                     onMouseEnter={() => setActiveCategory(cat.id)}
-                    className={`w-full px-4 py-3 text-left text-sm font-medium transition ${
+                    onClick={() => setActiveMenu(null)}
+                    className={`w-full block px-4 py-3 text-left text-sm font-medium transition ${
                       activeCategory === cat.id 
                         ? 'bg-gray-100 text-primary border-l-3 border-primary' 
                         : 'text-gray-700 hover:bg-gray-50'
                     }`}
                   >
                     {cat.name}
-                  </button>
+                  </a>
                 ))}
               </div>
               {/* Panel derecho: Subcategorías */}
               <div className="w-56 bg-gray-50">
-                {categories.find(c => c.id === activeCategory)?.subcategories.map((subcat, idx) => (
+                {categories.find(c => c.id === activeCategory)?.subcategories?.map((subcat, idx) => (
                   <a
                     key={idx}
-                    href={`/productos/${activeCategory}/${encodeURIComponent(subcat)}`}
+                    href={`/productos/${activeCategory}/${encodeURIComponent(subcat.id)}`}
                     className="block px-4 py-3 text-sm text-gray-700 hover:bg-white hover:text-primary transition border-b border-gray-200 last:border-b-0"
                   >
-                    {subcat}
+                    {subcat.name}
                   </a>
                 ))}
               </div>
@@ -165,44 +184,67 @@ export function Header() {
         </a>
       </nav>
 
+      
       {/* Menú móvil */}
       {activeMenu === 'menu' && (
-        <div className="md:hidden border-t border-gray-200 bg-white max-h-96 overflow-y-auto">
+        <div className="md:hidden border-t border-gray-200 bg-white max-h-[calc(100vh-120px)] overflow-y-auto">
           <a href="/" className="block px-4 py-3 text-black font-medium text-base border-b border-gray-100 hover:bg-gray-50 transition">
             Home
           </a>
           <div className="border-b border-gray-100">
             <button 
               className="w-full px-4 py-3 text-black font-medium text-base hover:bg-gray-50 transition flex justify-between items-center"
-              onClick={() => setActiveMenu(activeMenu === 'productos' ? 'menu' : 'productos')}
+              
+              onClick={() => setMobileProductsOpen(!mobileProductsOpen)}
             >
               Productos
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+             
+              <svg className={`w-5 h-5 transition transform ${mobileProductsOpen ? 'rotate-90' : ''}`} fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
               </svg>
             </button>
-            {activeMenu === 'productos' && (
+            
+           
+            {mobileProductsOpen && (
               <div className="bg-gray-50">
                 {categories.map((cat) => (
                   <div key={cat.id} className="border-b border-gray-200">
-                    <button
-                      onClick={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
-                      className="w-full px-4 py-2 text-black text-sm font-medium text-left hover:bg-white transition flex justify-between items-center"
+                   
+                    <a
+                      href={`/productos/${cat.id}`}
+                      onClick={(e) => {
+                        
+                      }}
+                      className="w-full block px-4 py-3 text-black text-sm font-medium text-left hover:bg-white transition border-b border-gray-100"
                     >
                       {cat.name}
-                      <svg className={`w-4 h-4 transition ${activeCategory === cat.id ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </a>
+                    <button
+                      onClick={() => handleCategoryToggle(cat.id)}
+                      className="w-full px-4 py-2 text-black text-sm font-medium text-left hover:bg-white transition flex justify-between items-center"
+                    >
+                      <span className="text-xs text-gray-500">Subcategorías</span>
+                      <svg
+                        className={`w-4 h-4 transition transform ${activeCategory === cat.id ? 'rotate-90' : ''}`}
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     </button>
                     {activeCategory === cat.id && (
-                      <div>
+                      <div className="bg-gray-100">
                         {cat.subcategories.map((subcat, idx) => (
                           <a
                             key={idx}
-                            href={`/productos/${cat.id}/${encodeURIComponent(subcat)}`}
-                            className="block px-6 py-2 text-gray-700 text-xs hover:text-black hover:bg-gray-100 transition"
+                            href={`/productos/${cat.id}/${encodeURIComponent(subcat.id)}`}
+                            className="block px-6 py-2 text-gray-700 text-xs hover:text-black hover:bg-gray-200 transition"
                           >
-                            {subcat}
+                            {subcat.name}
                           </a>
                         ))}
                       </div>
@@ -212,14 +254,9 @@ export function Header() {
               </div>
             )}
           </div>
+          {/* ... Resto de enlaces ... */}
           <a href="/ofertas" className="block px-4 py-3 text-black font-medium text-base border-b border-gray-100 hover:bg-gray-50 transition">
             Ofertas
-          </a>
-          <a href="/faq" className="block px-4 py-3 text-black font-medium text-base border-b border-gray-100 hover:bg-gray-50 transition">
-            FAQ
-          </a>
-          <a href="/venta-mayorista" className="block px-4 py-3 text-black font-medium text-base border-b border-gray-100 hover:bg-gray-50 transition">
-            Venta Mayorista
           </a>
           <a href="/contacto" className="block px-4 py-3 text-black font-medium text-base hover:bg-gray-50 transition">
             Contacto

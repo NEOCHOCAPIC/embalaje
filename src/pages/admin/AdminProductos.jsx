@@ -11,8 +11,10 @@ import {
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 
+
 export const AdminProductos = () => {
   const [productos, setProductos] = useState([]);
+  const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -21,15 +23,42 @@ export const AdminProductos = () => {
     descripcion: '',
     precio: '',
     categoria: '',
+    subcategoria: '',
     stock: '',
     imagen: ''
   });
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Cargar productos al inicializar
+  // Cargar productos y categorías al inicializar
   useEffect(() => {
-    cargarProductos();
+    const loadData = async () => {
+      try {
+        // Cargar categorías
+        const categoriasSnapshot = await getDocs(collection(db, 'categorias'));
+       
+          const categoriasData = categoriasSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          setCategorias(categoriasData);
+        
+
+        // Cargar productos
+        const querySnapshot = await getDocs(collection(db, 'productos'));
+        const productosData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setProductos(productosData);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error cargando datos:', error);
+        setLoading(false);
+      }
+    };
+
+    loadData();
   }, []);
 
   const cargarProductos = async () => {
@@ -79,6 +108,7 @@ export const AdminProductos = () => {
         descripcion: '',
         precio: '',
         categoria: '',
+        subcategoria: '',
         stock: '',
         imagen: ''
       });
@@ -99,6 +129,7 @@ export const AdminProductos = () => {
       descripcion: producto.descripcion,
       precio: producto.precio.toString(),
       categoria: producto.categoria,
+      subcategoria: producto.subcategoria || '',
       stock: producto.stock.toString(),
       imagen: producto.imagen || ''
     });
@@ -182,6 +213,7 @@ export const AdminProductos = () => {
                   descripcion: '',
                   precio: '',
                   categoria: '',
+                  subcategoria: '',
                   stock: '',
                   imagen: ''
                 });
@@ -224,14 +256,39 @@ export const AdminProductos = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Categoría</label>
-                  <input
-                    type="text"
+                  <select
                     name="categoria"
                     required
                     value={formData.categoria}
                     onChange={handleInputChange}
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                  />
+                  >
+                    <option value="">Selecciona una categoría</option>
+                    {categorias.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Subcategoría</label>
+                  <select
+                    name="subcategoria"
+                    required
+                    value={formData.subcategoria}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                  >
+                    <option value="">Selecciona una subcategoría</option>
+                    {formData.categoria && 
+                      categorias.find(cat => cat.id === formData.categoria)?.subcategories?.map((subcat) => (
+                        <option key={subcat.id} value={subcat.id}>
+                          {subcat.name}
+                        </option>
+                      ))
+                    }
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Stock</label>

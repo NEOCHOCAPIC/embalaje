@@ -20,27 +20,6 @@ export const AdminDashboard = () => {
       path: '/admin/productos',
       color: 'bg-blue-500'
     },
-    {
-      title: 'Ver Pedidos',
-      description: 'Gestionar y revisar pedidos de clientes',
-      icon: '📋',
-      path: '/admin/pedidos',
-      color: 'bg-green-500'
-    },
-    {
-      title: 'Configuración',
-      description: 'Configurar ajustes generales de la tienda',
-      icon: '⚙️',
-      path: '/admin/configuracion',
-      color: 'bg-purple-500'
-    },
-    {
-      title: 'Reportes',
-      description: 'Ver estadísticas y reportes de ventas',
-      icon: '📊',
-      path: '/admin/reportes',
-      color: 'bg-orange-500'
-    }
   ];
 
   return (
@@ -112,30 +91,7 @@ export const AdminDashboard = () => {
             ))}
           </div>
 
-          {/* Quick Stats */}
-          <div className="mt-8">
-            <div className="bg-white shadow rounded-lg">
-              <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                  Resumen Rápido
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">0</div>
-                    <div className="text-sm text-gray-600">Productos</div>
-                  </div>
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">0</div>
-                    <div className="text-sm text-gray-600">Pedidos</div>
-                  </div>
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <div className="text-2xl font-bold text-purple-600">$0</div>
-                    <div className="text-sm text-gray-600">Ventas</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          
         </div>
       </div>
     </div>
