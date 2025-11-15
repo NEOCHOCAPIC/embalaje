@@ -8,8 +8,10 @@ import { Footer } from './components/layout/Footer'
 import { LoginAdmin } from './pages/admin/LoginAdmin'
 import { AdminDashboard } from './pages/admin/AdminDashboard'
 import { AdminProductos } from './pages/admin/AdminProductos'
+import { AdminOfertas } from './pages/admin/AdminOfertas'
 import Contact from './pages/Contact';
 import Productos from './pages/Productos'
+import { OfertasPage } from './pages/Ofertas'
 import WhatsAppButton from './components/Wsp'
 import { Destacados } from './components/public/Destacados'
 import Nosotros from './components/public/Nosotros'
@@ -35,6 +37,7 @@ function App() {
           <Route path="/productos" element={<Productos />} />
           <Route path="/productos/:categoriaId" element={<Productos />} />
           <Route path="/productos/:categoriaId/:subcategoriaId" element={<Productos />} />
+          <Route path="/ofertas" element={<OfertasPage />} />
           <Route path="/contacto" element={<Contact />} />
           <Route path="/producto/:productoId" element={<ProductoDetalle />} />
           
@@ -48,6 +51,11 @@ function App() {
           <Route path="/admin/productos" element={
             <ProtectedRoute>
               <AdminProductos />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/ofertas" element={
+            <ProtectedRoute>
+              <AdminOfertas />
             </ProtectedRoute>
           } />
           

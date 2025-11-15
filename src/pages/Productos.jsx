@@ -1,24 +1,29 @@
 import  { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { getDocs, collection, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase.js';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import { getCategorias } from '../lib/categoriesService.js';
+import { getActiveOffers, getProductOffer } from '../lib/ofertasService.js';
 
 export const Productos = () => {
   const { categoriaId, subcategoriaId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get('search') || '';
   
   const [productos, setProductos] = useState([]);
   const [categorias, setCategorias] = useState([]);
+  const [ofertas, setOfertas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtros, setFiltros] = useState({
     categoria: categoriaId || '',
     subcategoria: subcategoriaId || '',
     minPrecio: 0,
     maxPrecio: 100000,
-    ordenar: 'relevancia'
+    ordenar: 'relevancia',
+    busqueda: searchQuery
   });
 
   // Actualizar filtros cuando cambian los parámetros de URL
@@ -26,11 +31,12 @@ export const Productos = () => {
     setFiltros(prev => ({
       ...prev,
       categoria: categoriaId || '',
-      subcategoria: subcategoriaId || ''
+      subcategoria: subcategoriaId || '',
+      busqueda: searchQuery
     }));
-  }, [categoriaId, subcategoriaId]);
+  }, [categoriaId, subcategoriaId, searchQuery]);
 
-  // Cargar categorías
+  // Cargar categorías y ofertas
   useEffect(() => {
     const loadCategorias = async () => {
       try {
@@ -40,7 +46,18 @@ export const Productos = () => {
         console.error('Error cargando categorías:', error);
       }
     };
+    
+    const loadOfertas = async () => {
+      try {
+        const ofertasActivas = await getActiveOffers();
+        setOfertas(ofertasActivas);
+      } catch (error) {
+        console.error('Error cargando ofertas:', error);
+      }
+    };
+    
     loadCategorias();
+    loadOfertas();
   }, []);
 
   // Cargar productos con filtros
@@ -51,11 +68,14 @@ export const Productos = () => {
         const productosRef = collection(db, 'productos');
         let constraints = [];
 
-        if (filtros.categoria) {
-          constraints.push(where('categoria', '==', filtros.categoria));
-        }
-        if (filtros.subcategoria) {
-          constraints.push(where('subcategoria', '==', filtros.subcategoria));
+        // Solo aplicar filtros de categoría si no hay búsqueda
+        if (!filtros.busqueda) {
+          if (filtros.categoria) {
+            constraints.push(where('categoria', '==', filtros.categoria));
+          }
+          if (filtros.subcategoria) {
+            constraints.push(where('subcategoria', '==', filtros.subcategoria));
+          }
         }
 
         const q = query(productosRef, ...constraints);
@@ -65,6 +85,14 @@ export const Productos = () => {
           id: doc.id,
           ...doc.data()
         }));
+
+        // Filtrar por búsqueda de texto
+        if (filtros.busqueda) {
+          productosData = productosData.filter(p => 
+            p.nombre?.toLowerCase().includes(filtros.busqueda.toLowerCase()) ||
+            p.descripcion?.toLowerCase().includes(filtros.busqueda.toLowerCase())
+          );
+        }
 
         // Filtrar por precio
         productosData = productosData.filter(p => 
@@ -84,7 +112,16 @@ export const Productos = () => {
             break;
           case 'relevancia':
           default:
-            // Mantener orden de Firestore
+            // Si hay búsqueda, ordenar por relevancia (coincidencias en nombre primero)
+            if (filtros.busqueda) {
+              productosData.sort((a, b) => {
+                const aNameMatch = a.nombre?.toLowerCase().includes(filtros.busqueda.toLowerCase());
+                const bNameMatch = b.nombre?.toLowerCase().includes(filtros.busqueda.toLowerCase());
+                if (aNameMatch && !bNameMatch) return -1;
+                if (!aNameMatch && bNameMatch) return 1;
+                return 0;
+              });
+            }
             break;
         }
 
@@ -112,6 +149,19 @@ export const Productos = () => {
   const categoriaActual = categorias.find(c => c.id === filtros.categoria);
   const subcategorias = categoriaActual?.subcategories || [];
 
+  // Funciones para manejar ofertas
+  const calcularPrecioConDescuento = (precio, descuentoPorcentaje) => {
+    return precio * (1 - descuentoPorcentaje / 100);
+  };
+
+  const formatearPrecio = (precio) => {
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      minimumFractionDigits: 0
+    }).format(precio);
+  };
+
   return (
     <>
       <Header />
@@ -119,8 +169,18 @@ export const Productos = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Título y breadcrumb */}
           <div className="mb-8">
-            <h1 className="text-4xl font-bold text-gray-900">Nuestros Productos</h1>
-            {categoriaActual && (
+            <h1 className="text-4xl font-bold text-gray-900">
+              {filtros.busqueda ? `Resultados para "${filtros.busqueda}"` : 'Nuestros Productos'}
+            </h1>
+            {filtros.busqueda ? (
+              <p className="text-gray-600 mt-2">
+                <span className="cursor-pointer hover:text-indigo-600" onClick={() => navigate('/productos')}>
+                  Productos
+                </span>
+                {' > '}
+                <span className="font-semibold">Búsqueda: "{filtros.busqueda}"</span>
+              </p>
+            ) : categoriaActual ? (
               <p className="text-gray-600 mt-2">
                 <span className="cursor-pointer hover:text-indigo-600" onClick={() => navigate('/productos')}>
                   Productos
@@ -136,7 +196,7 @@ export const Productos = () => {
                   </>
                 )}
               </p>
-            )}
+            ) : null}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -268,7 +328,7 @@ export const Productos = () => {
                   <p className="text-gray-500 text-lg">No hay productos que coincidan con tus filtros</p>
                   <button
                     onClick={() => {
-                      setFiltros({ categoria: '', subcategoria: '', minPrecio: 0, maxPrecio: 100000, ordenar: 'relevancia' });
+                      setFiltros({ categoria: '', subcategoria: '', minPrecio: 0, maxPrecio: 100000, ordenar: 'relevancia', busqueda: '' });
                       navigate('/productos');
                     }}
                     className="mt-4 text-indigo-600 hover:text-indigo-700 font-semibold"
@@ -312,10 +372,15 @@ export const Productos = () => {
                               </svg>
                             </div>
                           )}
-                          {/* Badge de descuento (opcional) */}
-                          <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                            Nuevo
-                          </div>
+                          {/* Badge de descuento dinámico */}
+                          {(() => {
+                            const oferta = getProductOffer(producto, ofertas);
+                            return oferta ? (
+                              <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                                -{oferta.descuentoPorcentaje}% OFF
+                              </div>
+                            ) : null;
+                          })()}
                         </div>
 
                         {/* Contenido */}
@@ -333,10 +398,44 @@ export const Productos = () => {
                           {/* Precio y Stock */}
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-2xl font-bold text-gray-900">
-                                ${producto.precio.toLocaleString('es-CL')}
-                              </p>
-                              <p className={`text-sm ${producto.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {(() => {
+                                const oferta = getProductOffer(producto, ofertas);
+                                if (oferta) {
+                                  const precioOriginal = producto.precio;
+                                  const precioConDescuento = calcularPrecioConDescuento(precioOriginal, oferta.descuentoPorcentaje);
+                                  const ahorro = precioOriginal - precioConDescuento;
+                                  
+                                  return (
+                                    <div>
+                                      {/* Badge de oferta */}
+                                      <div className="mb-2">
+                                        <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                                          -{oferta.descuentoPorcentaje}% OFF
+                                        </span>
+                                      </div>
+                                      {/* Precio original tachado */}
+                                      <p className="text-sm text-gray-500 line-through">
+                                        {formatearPrecio(precioOriginal)}
+                                      </p>
+                                      {/* Precio con descuento */}
+                                      <p className="text-2xl font-bold text-red-600">
+                                        {formatearPrecio(precioConDescuento)}
+                                      </p>
+                                      {/* Ahorro */}
+                                      <p className="text-xs text-green-600 font-medium">
+                                        ¡Ahorras {formatearPrecio(ahorro)}!
+                                      </p>
+                                    </div>
+                                  );
+                                } else {
+                                  return (
+                                    <p className="text-2xl font-bold text-gray-900">
+                                      {formatearPrecio(producto.precio)}
+                                    </p>
+                                  );
+                                }
+                              })()}
+                              <p className={`text-sm mt-1 ${producto.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
                                 {producto.stock > 0 ? `${producto.stock} en stock` : 'Sin stock'}
                               </p>
                             </div>

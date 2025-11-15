@@ -20,6 +20,13 @@ export const AdminDashboard = () => {
       path: '/admin/productos',
       color: 'bg-blue-500'
     },
+    {
+      title: 'Gestionar Ofertas',
+      description: 'Crear y administrar ofertas por producto o categoría',
+      icon: '🏷️',
+      path: '/admin/ofertas',
+      color: 'bg-green-500'
+    },
   ];
 
   return (

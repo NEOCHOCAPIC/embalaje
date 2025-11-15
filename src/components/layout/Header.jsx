@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { getCategorias } from '../../lib/categoriesService.js'
+import { getProductos } from '../../lib/productsService.js'
 
 const MenuIcon = () => (
   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -17,25 +19,31 @@ const SearchIcon = () => (
   </svg>
 )
 export function Header() {
+  const navigate = useNavigate()
   const [showPromo, setShowPromo] = useState(true)
   const [activeMenu, setActiveMenu] = useState(null)
   const [promoIndex, setPromoIndex] = useState(0)
   const [activeCategory, setActiveCategory] = useState('film')
   const [categories, setCategories] = useState([])
   const [mobileProductsOpen, setMobileProductsOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [searchResults, setSearchResults] = useState([])
+  const [showSearchResults, setShowSearchResults] = useState(false)
+  const [allProducts, setAllProducts] = useState([])
+  const [searchLoading, setSearchLoading] = useState(false)
 
   const promoMessages = [
     'Despacho gratis en la RM por compras sobre $100.000',
     'Despacho entre 1 a 2 días'
   ]
 
-  // Cargar categorías desde Firestore
+  
   useEffect(() => {
     const loadCategorias = async () => {
       try {
         const cats = await getCategorias()
         setCategories(cats)
-        // Establecer la primera categoría como activa
+       
         if (cats.length > 0) {
           setActiveCategory(cats[0].id)
         }
@@ -46,7 +54,20 @@ export function Header() {
     loadCategorias()
   }, [])
 
-  // Cambiar mensaje 
+  
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const products = await getProductos()
+        setAllProducts(products || [])
+      } catch (error) {
+        console.error('Error cargando productos:', error)
+      }
+    }
+    loadProducts()
+  }, [])
+
+  
   useEffect(() => {
     const interval = setInterval(() => {
       setPromoIndex((prev) => (prev + 1) % 2)
@@ -73,6 +94,63 @@ export function Header() {
     setActiveCategory((prevCategory) => (prevCategory === categoryId ? null : categoryId));
   };
 
+  
+  useEffect(() => {
+    const searchProducts = async () => {
+      if (searchTerm.trim().length < 2) {
+        setSearchResults([])
+        setShowSearchResults(false)
+        return
+      }
+
+      setSearchLoading(true)
+      try {
+        const filtered = allProducts.filter(product => 
+          product.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          product.descripcion?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        setSearchResults(filtered.slice(0, 8)) 
+        setShowSearchResults(true)
+      } catch (error) {
+        console.error('Error en búsqueda:', error)
+      } finally {
+        setSearchLoading(false)
+      }
+    }
+
+    const timeoutId = setTimeout(searchProducts, 300)
+    return () => clearTimeout(timeoutId)
+  }, [searchTerm, allProducts])
+
+  // Manejar envío del formulario de búsqueda
+  const handleSearchSubmit = (e) => {
+    e.preventDefault()
+    if (searchTerm.trim()) {
+      navigate(`/productos?search=${encodeURIComponent(searchTerm.trim())}`)
+      setShowSearchResults(false)
+      setSearchTerm('')
+    }
+  }
+
+  // Manejar clic en resultado de búsqueda
+  const handleResultClick = (productId) => {
+    navigate(`/producto/${productId}`)
+    setShowSearchResults(false)
+    setSearchTerm('')
+  }
+
+  // Cerrar resultados cuando se hace clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.search-container')) {
+        setShowSearchResults(false)
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   return (
     <header className="sticky top-0 z-50 w-full bg-white shadow-sm">
       {/* Banner de promoción */}
@@ -93,18 +171,91 @@ export function Header() {
           </div>
 
           {/* Buscador - Hidden on mobile */}
-          <div className="hidden md:flex flex-1 max-w-md">
-            <div className="w-full flex items-center border border-gray-300 rounded-md bg-gray-50 overflow-hidden">
-              
-              <input 
-                type="text" 
-                placeholder="Buscar productos..." 
-                className="flex-1 px-4 py-2 bg-transparent text-black placeholder-gray-500 focus:outline-none text-sm"
-              />
-              <button className="px-3 py-2 text-black hover:text-black transition">
-                <SearchIcon />
-              </button>
-            </div>
+          <div className="hidden md:flex flex-1 max-w-md relative search-container">
+            <form onSubmit={handleSearchSubmit} className="w-full">
+              <div className="w-full flex items-center border border-gray-300 rounded-md bg-gray-50 overflow-hidden focus-within:ring-2 focus-within:ring-primary focus-within:border-primary">
+                <input 
+                  type="text" 
+                  placeholder="Buscar productos..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1 px-4 py-2 bg-transparent text-black placeholder-gray-500 focus:outline-none text-sm"
+                />
+                <button type="submit" className="px-3 py-2 text-black hover:text-primary transition">
+                  {searchLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></div>
+                  ) : (
+                    <SearchIcon />
+                  )}
+                </button>
+              </div>
+            </form>
+            
+            {/* Dropdown de resultados */}
+            {showSearchResults && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+                {searchResults.length === 0 ? (
+                  <div className="px-4 py-3 text-gray-500 text-sm">
+                    {searchLoading ? 'Buscando...' : 'No se encontraron productos'}
+                  </div>
+                ) : (
+                  <>
+                    {searchResults.map((product) => (
+                      <div
+                        key={product.id}
+                        onClick={() => handleResultClick(product.id)}
+                        className="flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                      >
+                        <div className="shrink-0 w-12 h-12 mr-3">
+                          {product.imagen ? (
+                            <div className="w-full h-full relative">
+                              <img
+                                src={product.imagen}
+                                alt={product.nombre}
+                                className="w-full h-full object-cover rounded-md"
+                                onError={(e) => {
+                                  e.target.style.display = 'none'
+                                  e.target.parentElement.querySelector('.fallback-div').style.display = 'flex'
+                                }}
+                              />
+                              <div className="fallback-div w-full h-full bg-gray-200 rounded-md flex items-center justify-center text-gray-400 text-xs absolute inset-0" style={{display: 'none'}}>
+                                Sin imagen
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="w-full h-full bg-gray-200 rounded-md flex items-center justify-center text-gray-400 text-xs">
+                              Sin imagen
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {product.nombre}
+                          </p>
+                          <p className="text-sm text-gray-500 truncate">
+                            ${product.precio?.toLocaleString('es-CL')}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                    {searchResults.length >= 8 && (
+                      <div className="px-4 py-2 bg-gray-50 border-t">
+                        <button
+                          onClick={() => {
+                            navigate(`/productos?search=${encodeURIComponent(searchTerm)}`)
+                            setShowSearchResults(false)
+                            setSearchTerm('')
+                          }}
+                          className="text-sm text-primary hover:text-primary font-medium"
+                        >
+                          Ver todos los resultados
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Iconos derechos */}
@@ -170,15 +321,9 @@ export function Header() {
           )}
         </div>
 
-        <a href="/ofertas" className="px-4 py-3 text-black font-medium text-sm hover:text-primary transition">
-          Ofertas
+        <a href="/ofertas" className="px-4 py-3 text-red-600 font-semibold text-sm hover:text-red-700 transition">
+          🔥 Ofertas
         </a>
-        {/* <a href="/faq" className="px-4 py-3 text-black font-medium text-sm hover:text-primary transition">
-          FAQ
-        </a>
-        <a href="/venta-mayorista" className="px-4 py-3 text-black font-medium text-sm hover:text-primary transition">
-          Venta Mayorista
-        </a> */}
         <a href="/contacto" className="px-4 py-3 text-black font-medium text-sm hover:text-primary transition">
           Contacto
         </a>
@@ -188,6 +333,28 @@ export function Header() {
       {/* Menú móvil */}
       {activeMenu === 'menu' && (
         <div className="md:hidden border-t border-gray-200 bg-white max-h-[calc(100vh-120px)] overflow-y-auto">
+          {/* Buscador móvil */}
+          <div className="px-4 py-3 border-b border-gray-100">
+            <form onSubmit={handleSearchSubmit} className="w-full">
+              <div className="w-full flex items-center border border-gray-300 rounded-md bg-gray-50 overflow-hidden focus-within:ring-2 focus-within:ring-primary focus-within:border-primary">
+                <input 
+                  type="text" 
+                  placeholder="Buscar productos..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1 px-3 py-2 bg-transparent text-black placeholder-gray-500 focus:outline-none text-sm"
+                />
+                <button type="submit" className="px-3 py-2 text-black hover:text-primary transition">
+                  {searchLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></div>
+                  ) : (
+                    <SearchIcon />
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+          
           <a href="/" className="block px-4 py-3 text-black font-medium text-base border-b border-gray-100 hover:bg-gray-50 transition">
             Home
           </a>
@@ -212,7 +379,7 @@ export function Header() {
                    
                     <a
                       href={`/productos/${cat.id}`}
-                      onClick={(e) => {
+                      onClick={() => {
                         
                       }}
                       className="w-full block px-4 py-3 text-black text-sm font-medium text-left hover:bg-white transition border-b border-gray-100"
@@ -255,8 +422,8 @@ export function Header() {
             )}
           </div>
           {/* ... Resto de enlaces ... */}
-          <a href="/ofertas" className="block px-4 py-3 text-black font-medium text-base border-b border-gray-100 hover:bg-gray-50 transition">
-            Ofertas
+          <a href="/ofertas" className="block px-4 py-3 text-red-600 font-semibold text-base border-b border-gray-100 hover:bg-red-50 transition">
+            🔥 Ofertas
           </a>
           <a href="/contacto" className="block px-4 py-3 text-black font-medium text-base hover:bg-gray-50 transition">
             Contacto
