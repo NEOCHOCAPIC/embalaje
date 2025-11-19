@@ -4,6 +4,7 @@ import { getProductoById } from '../lib/productsService';
 import { getActiveOffers, getProductOffer } from '../lib/ofertasService';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
+import { SEO } from '../components/SEO';
 
 const ProductoDetalle = () => {
   const { productoId } = useParams();
@@ -74,6 +75,14 @@ const ProductoDetalle = () => {
 
   return (
     <>
+      <SEO 
+        title={`${producto.nombre} - ${oferta ? `${oferta.descuentoPorcentaje}% OFF` : 'Precio especial'} | Plastyfilm SPA`}
+        description={`${producto.descripcion} ${oferta ? `¡Oferta especial con ${oferta.descuentoPorcentaje}% de descuento!` : ''} ${producto.stock > 0 ? 'En stock.' : 'Consultar disponibilidad.'} Precio: ${formatearPrecio(precioFinal)}. Cotiza ahora en Plastyfilm Chile.`}
+        keywords={`${producto.nombre}, ${producto.categoria || 'embalaje'}, film stretch, comprar ${producto.nombre}, precio ${producto.nombre}, plastyfilm`}
+        canonical={`https://plastyfilmspa.cl/producto/${productoId}`}
+        ogImage={producto.imagen}
+        type="product"
+      />
       <Header />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
