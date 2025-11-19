@@ -16,6 +16,7 @@ import WhatsAppButton from './components/Wsp'
 import { Destacados } from './components/public/Destacados'
 import Nosotros from './components/public/Nosotros'
 import ProductoDetalle from './pages/ProductoDetalle';
+import { SEO } from './components/SEO';
 
 function App() {
   return (
@@ -25,6 +26,12 @@ function App() {
           {/* Rutas públicas */}
           <Route path="/" element={
             <>
+              <SEO 
+                title="Plastyfilm SPA - Film Stretch y Embalaje Industrial | Chile"
+                description="Distribuidor líder de film stretch, embalaje industrial y soluciones de empaque en Chile. Envío rápido, precios mayoristas. ¡Contáctanos!"
+                keywords="film stretch, embalaje industrial, film plástico, stretch film, embalaje Chile, plastyfilm, empaque industrial, film adherente"
+                canonical="https://plastyfilm.cl/"
+              />
               <Header />
               <Hero />
              <Destacados />
@@ -34,12 +41,12 @@ function App() {
             </>
           } />
            {/* Rutas públicas */}
-          <Route path="/productos" element={<Productos />} />
-          <Route path="/productos/:categoriaId" element={<Productos />} />
-          <Route path="/productos/:categoriaId/:subcategoriaId" element={<Productos />} />
-          <Route path="/ofertas" element={<OfertasPage />} />
-          <Route path="/contacto" element={<Contact />} />
-          <Route path="/producto/:productoId" element={<ProductoDetalle />} />
+          <Route path="/productos" element={<><Productos /><WhatsAppButton /></>} />
+          <Route path="/productos/:categoriaId" element={<><Productos /><WhatsAppButton /></>} />
+          <Route path="/productos/:categoriaId/:subcategoriaId" element={<><Productos /><WhatsAppButton /></>} />
+          <Route path="/ofertas" element={<><OfertasPage /><WhatsAppButton /></>} />
+          <Route path="/contacto" element={<><Contact /><WhatsAppButton /></>} />
+          <Route path="/producto/:productoId" element={<><ProductoDetalle /><WhatsAppButton /></>} />
           
           {/* Rutas de admin */}
           <Route path="/admin" element={<LoginAdmin />} />

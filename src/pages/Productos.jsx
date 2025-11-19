@@ -6,6 +6,7 @@ import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import { getCategorias } from '../lib/categoriesService.js';
 import { getActiveOffers, getProductOffer } from '../lib/ofertasService.js';
+import { SEO } from '../components/SEO';
 
 export const Productos = () => {
   const { categoriaId, subcategoriaId } = useParams();
@@ -164,6 +165,21 @@ export const Productos = () => {
 
   return (
     <>
+      <SEO 
+        title={filtros.busqueda 
+          ? `${filtros.busqueda} - Productos | Plastyfilm SPA`
+          : categoriaId
+          ? `${categoriaId} - Catálogo | Plastyfilm SPA`
+          : 'Productos - Film Stretch y Embalaje Industrial | Plastyfilm SPA'
+        }
+        description={filtros.busqueda
+          ? `Encuentra ${filtros.busqueda} en Plastyfilm. Film stretch, embalaje industrial y soluciones de empaque en Chile.`
+          : 'Catálogo completo de film stretch, embalaje industrial, film plástico y soluciones de empaque. Precios mayoristas y envío rápido en Chile.'
+        }
+        keywords="film stretch, embalaje industrial, stretch film, film plástico, embalaje Chile, plastyfilm, empaque industrial"
+        canonical={`https://plastyfilmspa.cl/productos${categoriaId ? `/${categoriaId}` : ''}${subcategoriaId ? `/${subcategoriaId}` : ''}`}
+        type="product.group"
+      />
       <Header />
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

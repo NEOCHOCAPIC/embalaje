@@ -1,5 +1,6 @@
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
+import { SEO } from '../components/SEO';
 
 
 // Ícono de Teléfono
@@ -40,19 +41,19 @@ const contactInfo = [
   {
     icon: PhoneSVG, // Componente SVG
     title: "Llámanos",
-    detail: "+56 9 1234 5678",
-    href: "tel:+56912345678"
+    detail: "+56 9 7315 7810",
+    href: "tel:+56973157810"
   },
   {
     icon: EnvelopeSVG, // Componente SVG
     title: "Escríbenos",
-    detail: "contacto@plastyfilm.cl",
-    href: "mailto:contacto@plastyfilm.cl"
+    detail: "ventas@plastyfilmspa.cl",
+    href: "mailto:ventas@plastyfilmspa.cl"
   },
   {
     icon: MapPinSVG, // Componente SVG
     title: "Nuestra Ubicación",
-    detail: "Calle Falsa 123, Santiago, Chile",
+    detail: "Av. Américo Vespucio 1001, Planta 3 bodega 25/26, Quilicura (Megacentro Cordillera)",
     href: "#map"
   },
   {
@@ -69,6 +70,12 @@ const contactInfo = [
 function Contact() {
   return (
     <>
+      <SEO 
+        title="Contacto - Plastyfilm SPA | Cotizaciones y Consultas"
+        description="Contáctanos para cotizaciones de film stretch y embalaje industrial. Tel: +56 9 7315 7810 | Email: ventas@plastyfilmspa.cl | Quilicura, Santiago, Chile."
+        keywords="contacto plastyfilm, cotización film stretch, consultas embalaje, plastyfilm quilicura, film stretch chile"
+        canonical="https://plastyfilmspa.cl/contacto"
+      />
       <Header /> 
       
       <section className="py-20 sm:py-24 bg-gray-50">
@@ -179,10 +186,16 @@ function Contact() {
           {/* Sección de Mapa (Opcional) */}
           <div className="mt-16 bg-white p-6 rounded-2xl shadow-xl">
               <h3 id="map" className="text-2xl font-bold text-gray-900 mb-4 border-l-4 border-indigo-600 pl-3">Dónde Encontrarnos</h3>
-              <div className="aspect-w-16 aspect-h-9">
-                  <div className="w-full h-80 bg-gray-200 rounded-xl flex items-center justify-center text-gray-500 border border-dashed border-gray-400">
-                    [Contenedor del Mapa de Google]
-                  </div>
+              <div className="aspect-w-16 aspect-h-9 h-72">
+                  <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3329.513768091548!2d-70.7535218!3d-33.3810099!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzPCsDIyJzUwLjAiUyA3MMKwNDUnMTIuNyJX!5e0!3m2!1ses-419!2scl!4v1699999999999!5m2!1ses-419!2scl"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    allowFullScreen=""
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  ></iframe>
               </div>
           </div>
 

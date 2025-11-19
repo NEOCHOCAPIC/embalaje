@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import WhatsAppButton from '../components/Wsp';
+import { SEO } from '../components/SEO';
 
 export const OfertasPage = () => {
   const [categorias, setCategorias] = useState([]);
@@ -159,6 +160,12 @@ export const OfertasPage = () => {
 
   return (
     <>
+      <SEO 
+        title="Ofertas Especiales - Film Stretch y Embalaje | Plastyfilm SPA"
+        description="Aprovecha nuestras ofertas especiales en film stretch y embalaje industrial. Descuentos exclusivos por tiempo limitado en Plastyfilm Chile."
+        keywords="ofertas film stretch, descuentos embalaje, promociones plastyfilm, film stretch oferta, embalaje en oferta"
+        canonical="https://plastyfilmspa.cl/ofertas"
+      />
       <Header />
       <div className="min-h-screen bg-red-50">
         {/* Hero Section */}

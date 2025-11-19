@@ -1,0 +1,11 @@
+# robots.txt para Plastyfilm SPA
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+
+# Sitemap
+Sitemap: https://plastyfilmspa.cl/sitemap.xml
+
+# Crawl-delay (opcional, ajustar según necesidad)
+Crawl-delay: 1
