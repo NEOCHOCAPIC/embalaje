@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "@tailwindcss/vite": "^4.1.16",
     "cloudinary": "^2.8.0",
     "firebase": "^12.4.0",

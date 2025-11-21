@@ -1,6 +1,8 @@
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import { SEO } from '../components/SEO';
+import { useState } from 'react';
+import emailjs from '@emailjs/browser';
 
 
 // Ícono de Teléfono
@@ -68,6 +70,73 @@ const contactInfo = [
 // --- 3. Componente Principal ---
 
 function Contact() {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    message: ''
+  });
+  const [sending, setSending] = useState(false);
+  const [statusMessage, setStatusMessage] = useState({ type: '', text: '' });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSending(true);
+    setStatusMessage({ type: '', text: '' });
+
+    try {
+      // Reemplaza estos valores con los tuyos de EmailJS
+      const SERVICE_ID = import.meta.env.VITE_SERVICE_ID;
+      const TEMPLATE_ID = import.meta.env.VITE_TEMPLATE_ID;
+      const PUBLIC_KEY = import.meta.env.VITE_PUBLIC_KEY; 
+
+      const templateParams = {
+        from_name: formData.name,
+        from_email: formData.email,
+        phone: formData.phone,
+        message: formData.message,
+        to_email: 'ventas@plastyfilmspa.cl' // Email donde recibirás los mensajes
+      };
+
+      const response = await emailjs.send(
+        SERVICE_ID,
+        TEMPLATE_ID,
+        templateParams,
+        PUBLIC_KEY
+      );
+
+      if (response.status === 200) {
+        setStatusMessage({
+          type: 'success',
+          text: '¡Mensaje enviado exitosamente! Nos pondremos en contacto pronto.'
+        });
+        // Limpiar formulario
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          message: ''
+        });
+      }
+    } catch (error) {
+      console.error('Error enviando email:', error);
+      setStatusMessage({
+        type: 'error',
+        text: 'Hubo un error al enviar el mensaje. Por favor, intenta nuevamente o contáctanos directamente.'
+      });
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <>
       <SEO 
@@ -120,7 +189,18 @@ function Contact() {
 
             {/* Columna 2: Formulario (Lado Derecho) */}
             <div className="lg:col-span-8 bg-white p-8 rounded-2xl shadow-xl">
-              <form className="space-y-6">
+              {/* Mensaje de estado */}
+              {statusMessage.text && (
+                <div className={`mb-6 p-4 rounded-lg ${
+                  statusMessage.type === 'success' 
+                    ? 'bg-green-100 border border-green-400 text-green-700' 
+                    : 'bg-red-100 border border-red-400 text-red-700'
+                }`}>
+                  <p className="font-medium">{statusMessage.text}</p>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Campo Nombre */}
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nombre</label>
@@ -128,9 +208,12 @@ function Contact() {
                     type="text"
                     id="name"
                     name="name"
+                    value={formData.name}
+                    onChange={handleChange}
                     placeholder="Tu nombre completo"
                     className="mt-1 block w-full rounded-lg border-gray-300 p-3 shadow-sm focus:border-indigo-600 focus:ring-indigo-600 sm:text-base transition duration-200"
                     required
+                    disabled={sending}
                   />
                 </div>
                 {/* Campo Correo */}
@@ -140,9 +223,12 @@ function Contact() {
                     type="email"
                     id="email"
                     name="email"
+                    value={formData.email}
+                    onChange={handleChange}
                     placeholder="ejemplo@correo.cl"
                     className="mt-1 block w-full rounded-lg border-gray-300 p-3 shadow-sm focus:border-indigo-600 focus:ring-indigo-600 sm:text-base transition duration-200"
                     required
+                    disabled={sending}
                   />
                 </div>
                 {/* Campo Teléfono */}
@@ -152,9 +238,12 @@ function Contact() {
                     type="tel"
                     id="phone"
                     name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
                     placeholder="+56 9 XXXXXXXX"
                     className="mt-1 block w-full rounded-lg border-gray-300 p-3 shadow-sm focus:border-indigo-600 focus:ring-indigo-600 sm:text-base transition duration-200"
                     required
+                    disabled={sending}
                   />
                 </div>
                 {/* Campo Mensaje */}
@@ -164,9 +253,12 @@ function Contact() {
                     id="message"
                     name="message"
                     rows="4"
+                    value={formData.message}
+                    onChange={handleChange}
                     placeholder="Describe tu requerimiento (ej: cotización de film, consulta de stock, etc.)"
                     className="mt-1 block w-full rounded-lg border-gray-300 p-3 shadow-sm focus:border-indigo-600 focus:ring-indigo-600 sm:text-base transition duration-200"
                     required
+                    disabled={sending}
                   ></textarea>
                 </div>
                 
@@ -174,9 +266,24 @@ function Contact() {
                 <div className="pt-4">
                   <button
                     type="submit"
-                    className="w-full inline-flex justify-center py-3 px-6 border border-transparent shadow-lg text-lg font-bold rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transform hover:scale-[1.005]"
+                    disabled={sending}
+                    className={`w-full inline-flex justify-center items-center py-3 px-6 border border-transparent shadow-lg text-lg font-bold rounded-lg text-white transition duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transform hover:scale-[1.005] ${
+                      sending 
+                        ? 'bg-indigo-400 cursor-not-allowed' 
+                        : 'bg-indigo-600 hover:bg-indigo-700'
+                    }`}
                   >
-                    Enviar Mensaje
+                    {sending ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Enviando...
+                      </>
+                    ) : (
+                      'Enviar Mensaje'
+                    )}
                   </button>
                 </div>
               </form>
